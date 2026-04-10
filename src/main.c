@@ -57,7 +57,7 @@ int main() {
 	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client Connected\n");
 	//2. Creating a buffer to hold the incoming data
-	char buffer[1024];
+	
 	//3. Reading the data from the client
 	void *handle_client(void *client_ptr) {
     int client_fd = *((int *)client_ptr);
