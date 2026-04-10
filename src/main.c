@@ -53,7 +53,7 @@ int main() {
 	 printf("Waiting for a client to connect...\n");
 	 client_addr_len = sizeof(client_addr);
 	//1. Accept the incoming connection
-	int client_fd = accept(server_fd, (struct sockaddr_in *) &client_addr, &client_addr_len);
+	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client Connected\n");
 	//2. Creating a buffer to hold the incoming data
 	char buffer[1024];
