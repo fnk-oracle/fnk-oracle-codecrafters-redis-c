@@ -10,17 +10,48 @@
 
 void *handle_client(void *client_ptr) {
     int client_fd = *((int *)client_ptr);
-    free(client_ptr); // Clean up the memory we allocated in main
+    free(client_ptr);
 
     char buffer[1024];
-    while (recv(client_fd, buffer, sizeof(buffer), 0) > 0) {
-        send(client_fd, "+PONG\r\n", 7, 0);
+    while (1) {
+        int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received <= 0) break;
+
+        buffer[bytes_received] = '\0'; // Null-terminate for string searching
+
+        // Check if the command contains "ECHO" (case-insensitive search is safer)
+        char *echo_pos = strcasestr(buffer, "ECHO");
+        
+        if (echo_pos) {
+            // Find the start of the argument after "ECHO\r\n"
+            // In RESP, the argument starts after the '$' and length line
+            char *next_line = strstr(echo_pos, "\r\n");
+            if (next_line) {
+                char *bulk_string_start = strstr(next_line + 2, "\r\n");
+                if (bulk_string_start) {
+                    char *data_start = bulk_string_start + 2;
+                    char *data_end = strstr(data_start, "\r\n");
+                    
+                    if (data_end) {
+                        int data_len = data_end - data_start;
+                        char response[1024];
+                        // Format the response as a Bulk String: $<length>\r\n<data>\r\n
+                        int resp_len = sprintf(response, "$%d\r\n%.*s\r\n", data_len, data_len, data_start);
+                        send(client_fd, response, resp_len, 0);
+                    }
+                }
+            }
+        } else {
+            // Default to PONG for anything else (like PING)
+            send(client_fd, "+PONG\r\n", 7, 0);
+        }
     }
 
     printf("Client disconnected\n");
     close(client_fd);
     return NULL;
 }
+
 
 int main() {
 	// Disable output buffering
