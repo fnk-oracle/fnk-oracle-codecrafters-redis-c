@@ -61,7 +61,7 @@ int main() {
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
 
 	if(bytes_received>0){
-		const char *response = "+PONG";
+		const char *response = "+PONG\r\n";
 		send(client_fd, response, strlen(response), 0);
 	}
 	//4. Cleaning Up
