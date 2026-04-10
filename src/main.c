@@ -8,6 +8,20 @@
 #include <unistd.h>
 #include <pthread.h> 
 
+void *handle_client(void *client_ptr) {
+    int client_fd = *((int *)client_ptr);
+    free(client_ptr); // Clean up the memory we allocated in main
+
+    char buffer[1024];
+    while (recv(client_fd, buffer, sizeof(buffer), 0) > 0) {
+        send(client_fd, "+PONG\r\n", 7, 0);
+    }
+
+    printf("Client disconnected\n");
+    close(client_fd);
+    return NULL;
+}
+
 int main() {
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -52,26 +66,11 @@ int main() {
 	 }
 	//
 	printf("Waiting for a client to connect...\n");
-	client_addr_len = sizeof(client_addr);
-	//1. Accept the incoming connection
-	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
-	printf("Client Connected\n");
+	
 	//2. Creating a buffer to hold the incoming data
 	
 	//3. Reading the data from the client
-	void *handle_client(void *client_ptr) {
-    int client_fd = *((int *)client_ptr);
-    free(client_ptr); // Clean up the memory we allocated in main
-
-    char buffer[1024];
-    while (recv(client_fd, buffer, sizeof(buffer), 0) > 0) {
-        send(client_fd, "+PONG\r\n", 7, 0);
-    }
-
-    printf("Client disconnected\n");
-    close(client_fd);
-    return NULL;
-}
+	
 	while(1){
 
 	
@@ -98,7 +97,7 @@ int main() {
     pthread_detach(thread_id);
 }
 	//4. Cleaning Up
-	close(client_fd);
+	
 	close(server_fd);
 
 	return 0;
