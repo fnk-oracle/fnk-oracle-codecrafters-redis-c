@@ -50,20 +50,25 @@ int main() {
 	 	return 1;
 	 }
 	//
-	 printf("Waiting for a client to connect...\n");
-	 client_addr_len = sizeof(client_addr);
+	printf("Waiting for a client to connect...\n");
+	client_addr_len = sizeof(client_addr);
 	//1. Accept the incoming connection
 	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	printf("Client Connected\n");
 	//2. Creating a buffer to hold the incoming data
 	char buffer[1024];
 	//3. Reading the data from the client
+	while(1){
+
+	
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
 
-	if(bytes_received>0){
-		const char *response = "+PONG\r\n";
-		send(client_fd, response, strlen(response), 0);
+	if(bytes_received<=0){
+		printf("Client disconnected or error.\n");
+		break;
 	}
+	send(client_fd, "+PONG\r\n", 7,0);
+}
 	//4. Cleaning Up
 	close(client_fd);
 	close(server_fd);
