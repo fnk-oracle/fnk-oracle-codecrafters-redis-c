@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <pthread.h> 
 
 int main() {
 	// Disable output buffering
@@ -58,16 +59,43 @@ int main() {
 	//2. Creating a buffer to hold the incoming data
 	char buffer[1024];
 	//3. Reading the data from the client
+	void *handle_client(void *client_ptr) {
+    int client_fd = *((int *)client_ptr);
+    free(client_ptr); // Clean up the memory we allocated in main
+
+    char buffer[1024];
+    while (recv(client_fd, buffer, sizeof(buffer), 0) > 0) {
+        send(client_fd, "+PONG\r\n", 7, 0);
+    }
+
+    printf("Client disconnected\n");
+    close(client_fd);
+    return NULL;
+}
 	while(1){
 
 	
-	int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
+	client_addr_len = sizeof(client_addr);
+    int client_fd = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len);
+    
+    if (client_fd == -1) {
+        printf("Accept failed: %s\n", strerror(errno));
+        continue; // Keep trying for the next client
+    }
+    printf("New client connected!\n");
 
-	if(bytes_received<=0){
-		printf("Client disconnected or error.\n");
-		break;
-	}
-	send(client_fd, "+PONG\r\n", 7,0);
+    // Allocate memory for the file descriptor to pass to the thread safely
+    int *new_sock = malloc(sizeof(int));
+    *new_sock = client_fd;
+
+    pthread_t thread_id;
+    if (pthread_create(&thread_id, NULL, handle_client, (void *)new_sock) != 0) {
+        printf("Could not create thread\n");
+        free(new_sock);
+    }
+    
+    // Detach the thread so its resources are freed automatically when it's done
+    pthread_detach(thread_id);
 }
 	//4. Cleaning Up
 	close(client_fd);
